@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+
+	<session-factory>
+
+		<property name="connection.driver_class">
+			com.mysql.jdbc.Driver
+		</property>
+		<property name="connection.url">
+			jdbc:mysql://hystqio.ci4mdwjbt4nk.us-east-1.rds.amazonaws.com:3306/hystqio
+		</property>
+		<property name="connection.username">hystq</property>
+		<property name="connection.password">Chah5Eij</property>
+
+		<property name="connection.pool_size">1</property>
+
+		<property name="dialect">
+			org.hibernate.dialect.MySQLDialect
+		</property>
+
+		<property name="current_session_context_class">thread</property>
+
+		<property name="cache.provider_class">
+			org.hibernate.cache.NoCacheProvider
+		</property>
+
+		<property name="show_sql">true</property>
+
+		<property name="hbm2ddl.auto">update</property>
+
+		<mapping class="net.viralpatel.shorty.model.Link" />
+	</session-factory>
+
+</hibernate-configuration>

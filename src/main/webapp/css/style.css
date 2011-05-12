@@ -1,0 +1,43 @@
+#grid {
+	display: none;
+}
+
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td
+	{
+	margin: 0;
+	padding: 0;
+}
+
+body,input,textarea,select,button {
+	color: #414240;
+	font-family: helvetica, arial, hirakakupro-w3, osaka, "ms pgothic",
+		sans-serif;
+	font-size: 14px;
+	font-size-adjust: none;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: normal;
+	line-height: 18px;
+}
+
+#content-inner {
+	min-height: 300px;
+	padding: 0 0 60px;
+}
+
+h1.title {
+	font-size: 30px;
+	margin: 10px 0 0 0px;
+}
+
+#link-container {
+	text-align:center;
+}
+
+.link {
+	font-size:20px;
+	border:4px solid #aaa;
+	background-color: #FFF8B1;
+	width:350px;
+	padding:3px;
+}
