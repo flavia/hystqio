@@ -15,13 +15,13 @@
     GNU General Public License for more details.
     You should have received a copy of the GNU General Public License
     along with hystqio. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package net.nineapps.hystqio.view;
 
-
 import javax.servlet.http.HttpServletRequest;
 
+import net.nineapps.hystqio.controller.HibernateLinkController;
 import net.nineapps.hystqio.controller.LinkController;
 import net.nineapps.hystqio.controller.SimpleDBLinkController;
 import net.nineapps.hystqio.model.Link;
@@ -40,61 +40,56 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 	private final static String DETAIL = "detail";
 	private String url;
 	private Link link;
-	
+
 	private LinkController linkController;
-	
+
 	private HttpServletRequest request;
-	
-	public LinkAction() {
-		// TODO make it a configuration option whether to use RDS or SimpleDB
-		linkController = new SimpleDBLinkController();
-	}
-	
+
 	/**
 	 * Add a new link and shorten it.
 	 */
 	public String add() {
 		link = new Link();
 		link.setUrl(this.url);
-		link = linkController.add(link);
-		
+		link = getLinkController().add(link);
+
 		return SUCCESS;
 	}
-	
+
 	/**
-	 * Depending on the request URL, this action
-	 * will show three different pages:
+	 * Depending on the request URL, this action will show three different
+	 * pages:
 	 * 
-	 * For a URL of the form http://hy.stq.io/uIn8n1+,
-	 * it will show the details about the given short URL. 
+	 * For a URL of the form http://hy.stq.io/uIn8n1+, it will show the details
+	 * about the given short URL.
 	 * 
-	 * For a URL of the form http://hy.stq.io/uIn8n1,
-	 * it will redirect to the URL associated to the short URL
-	 * if it exists.
-	 * If it doesn't exist, it will show a message and
-	 * stay in the main/home page waiting for user input.
+	 * For a URL of the form http://hy.stq.io/uIn8n1, it will redirect to the
+	 * URL associated to the short URL if it exists. If it doesn't exist, it
+	 * will show a message and stay in the main/home page waiting for user
+	 * input.
 	 * 
 	 * @return
 	 */
 	public String get() {
-		
+
 		String uri = request.getRequestURI();
-		
+
 		uri = HystqioUtils.getShortCodeFromURL(uri);
 
-		if(uri.charAt(uri.length()-1) == '+') {
-			uri = uri.substring(0, uri.length()-1);
-			this.link = this.linkController.get(uri);
+		if (uri.charAt(uri.length() - 1) == '+') {
+			uri = uri.substring(0, uri.length() - 1);
+			this.link = getLinkController().get(uri);
 			return DETAIL;
 		}
-		
-		this.link = this.linkController.get(uri);
-		if(null == this.link) {
+
+		this.link = getLinkController().get(uri);
+		if (null == this.link) {
 			addActionError(getText("error.url.unavailable"));
 			return INPUT;
 		} else {
-			
-			// asynchronously increment clicks so we redirect as soon as possible
+
+			// asynchronously increment clicks so we redirect as soon as
+			// possible
 			asyncIncrementClicks();
 
 			setUrl(link.getUrl());
@@ -105,10 +100,11 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 	private void asyncIncrementClicks() {
 		new Thread(new Runnable() {
 			public void run() {
-				linkController.incrementClicks(link);
+				getLinkController().incrementClicks(link);
 			}
 		}).start();
 	}
+
 	public String getUrl() {
 		return url;
 	}
@@ -124,7 +120,25 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 	public void setLink(Link link) {
 		this.link = link;
 	}
+
 	public void setServletRequest(HttpServletRequest request) {
 		this.request = request;
+	}
+
+	private LinkController initLinkController() {
+		String persistence = request.getSession().getServletContext()
+				.getInitParameter("persistence");
+		if (persistence != null
+				&& "hibernate".equals(persistence.toLowerCase())) {
+			return new HibernateLinkController();
+		}
+		return new SimpleDBLinkController();
+	}
+
+	private LinkController getLinkController() {
+		if (linkController == null) {
+			linkController = initLinkController();
+		}
+		return linkController;
 	}
 }
