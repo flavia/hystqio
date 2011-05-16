@@ -21,4 +21,12 @@ public class HystqioUtils {
 		return buffer.toString();
 	}
 	
+	public static String getShortCodeFromURL(String URL) {
+		
+		int index=0;
+		for(index=URL.length()-1; index>=0 && URL.charAt(index)!= '/' ;index--);
+		String shortCode = URL.substring(index+1);
+		
+		return shortCode;
+	}
 }

@@ -22,11 +22,10 @@ package net.nineapps.hystqio.view;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.nineapps.hystqio.controller.HibernateLinkController;
 import net.nineapps.hystqio.controller.LinkController;
 import net.nineapps.hystqio.controller.SimpleDBLinkController;
 import net.nineapps.hystqio.model.Link;
-import net.nineapps.hystqio.util.ShortyUtils;
+import net.nineapps.hystqio.util.HystqioUtils;
 
 import org.apache.struts2.interceptor.ServletRequestAware;
 
@@ -81,7 +80,7 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 		
 		String uri = request.getRequestURI();
 		
-		uri = ShortyUtils.getShortCodeFromURL(uri);
+		uri = HystqioUtils.getShortCodeFromURL(uri);
 
 		if(uri.charAt(uri.length()-1) == '+') {
 			uri = uri.substring(0, uri.length()-1);
