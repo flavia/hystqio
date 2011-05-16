@@ -20,15 +20,23 @@
 
 package net.nineapps.hystqio.controller;
 
-import org.hibernate.Query;
-import org.hibernate.classic.Session;
+import java.sql.Date;
 
 import net.nineapps.hystqio.model.Link;
 import net.nineapps.hystqio.util.HibernateUtil;
-import net.nineapps.hystqio.util.ShortyUtils;
+import net.nineapps.hystqio.util.HystqioUtils;
 
+import org.hibernate.Query;
+import org.hibernate.classic.Session;
+
+/**
+ * Struts controller which uses Hibernate to persist
+ * the links in a relational database.
+ *
+ */
 public class HibernateLinkController extends HibernateUtil implements LinkController {
 
+	// TODO for very long URLs it gives an exception "Data truncation: Data too long for column 'url' at row 1"
 
 	public Link get(String shortCode) {
 		
@@ -61,10 +69,53 @@ public class HibernateLinkController extends HibernateUtil implements LinkContro
 		
 		session.save(link);
 		if(null == link.getShortCode()) {
-			link.setShortCode(ShortyUtils.base48Encode(link.getId()));
+			link.setShortCode(generateShortcode(session));
+			link.setClicks(new Long(0));
+			link.setCreated(new Date(new java.util.Date().getTime()));
 			session.save(link);
 		}
 		session.getTransaction().commit();
 		return link;
 	}
+	
+	public void incrementClicks(Link link) {
+		Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+		session.beginTransaction();
+		Query query = session.createQuery("from Link where url = :url");
+		query.setString("url", link.getUrl());
+
+		Link oldLink = (Link) query.uniqueResult();
+		oldLink.setClicks(oldLink.getClicks() + 1);
+		
+		session.getTransaction().commit();
+	}
+
+	private boolean existsShortcode(String shortcode, Session session) {
+		Query query = session.createQuery("from Link where shortcode = :code");
+		query.setString("code", shortcode);
+		Link link = (Link) query.uniqueResult();
+		if (link != null) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Generate a short url which has not been assigned to any URL yet.
+	 * Or at least try 10 times :)
+	 */
+	public String generateShortcode(Session session) {
+		String shortcode;
+		int attempts = 0;
+		do {
+			shortcode = HystqioUtils.generateShortCode();
+			attempts++;
+			// check if the shortcode doesn't already exist
+		} while (existsShortcode(shortcode, session) && attempts < 10);
+		if (attempts > 1) {
+			System.err.println("WARNING: " +attempts+ " attempts to create a shortcode which is not taken.");
+		}
+		return shortcode;
+	}
+
 }

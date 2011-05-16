@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import net.nineapps.hystqio.controller.HibernateLinkController;
 import net.nineapps.hystqio.controller.LinkController;
+import net.nineapps.hystqio.controller.SimpleDBLinkController;
 import net.nineapps.hystqio.model.Link;
 import net.nineapps.hystqio.util.ShortyUtils;
 
@@ -31,6 +32,9 @@ import org.apache.struts2.interceptor.ServletRequestAware;
 
 import com.opensymphony.xwork2.ActionSupport;
 
+/**
+ * Main Struts action.
+ */
 public class LinkAction extends ActionSupport implements ServletRequestAware {
 
 	private static final long serialVersionUID = 1L;
@@ -43,8 +47,13 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 	private HttpServletRequest request;
 	
 	public LinkAction() {
-		linkController = new HibernateLinkController();
+		// TODO make it a configuration option whether to use RDS or SimpleDB
+		linkController = new SimpleDBLinkController();
 	}
+	
+	/**
+	 * Add a new link and shorten it.
+	 */
 	public String add() {
 		link = new Link();
 		link.setUrl(this.url);
@@ -52,6 +61,22 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 		
 		return SUCCESS;
 	}
+	
+	/**
+	 * Depending on the request URL, this action
+	 * will show three different pages:
+	 * 
+	 * For a URL of the form http://hy.stq.io/uIn8n1+,
+	 * it will show the details about the given short URL. 
+	 * 
+	 * For a URL of the form http://hy.stq.io/uIn8n1,
+	 * it will redirect to the URL associated to the short URL
+	 * if it exists.
+	 * If it doesn't exist, it will show a message and
+	 * stay in the main/home page waiting for user input.
+	 * 
+	 * @return
+	 */
 	public String get() {
 		
 		String uri = request.getRequestURI();
@@ -70,9 +95,20 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 			return INPUT;
 		} else {
 			
+			// asynchronously increment clicks so we redirect as soon as possible
+			asyncIncrementClicks();
+
 			setUrl(link.getUrl());
 			return SUCCESS;
 		}
+	}
+
+	private void asyncIncrementClicks() {
+		new Thread(new Runnable() {
+			public void run() {
+				linkController.incrementClicks(link);
+			}
+		}).start();
 	}
 	public String getUrl() {
 		return url;

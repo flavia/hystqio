@@ -39,6 +39,7 @@
 	</s:form>
 	<s:if test="link.shortCode != null">
 			<h3><s:text name="shorty.base.url"/><s:property value="link.shortCode"/></h3>
+			<a href="<s:text name="shorty.base.url"/><s:property value="link.shortCode"/>+">[details]</a>
 	</s:if>
 	
 </div>

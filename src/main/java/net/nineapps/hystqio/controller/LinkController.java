@@ -22,8 +22,13 @@ package net.nineapps.hystqio.controller;
 
 import net.nineapps.hystqio.model.Link;
 
+/**
+ * Interface for persisting and retrieving links
+ * in the persistence layer (be it RDS, SimpleDB, plain MySQL, etc.)
+ */
 public interface LinkController {
 
 	public Link get(String shortCode);
 	public Link add(Link link);
+	public void incrementClicks(Link link);
 }

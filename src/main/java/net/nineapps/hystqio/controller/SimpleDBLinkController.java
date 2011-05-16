@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 import net.nineapps.hystqio.model.Link;
 import net.nineapps.hystqio.util.HystqioUtils;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.simpledb.AmazonSimpleDB;
@@ -23,7 +24,15 @@ import com.amazonaws.services.simpledb.model.PutAttributesRequest;
 import com.amazonaws.services.simpledb.model.ReplaceableAttribute;
 import com.amazonaws.services.simpledb.model.SelectRequest;
 import com.amazonaws.services.simpledb.model.SelectResult;
+import com.amazonaws.services.simpledb.model.UpdateCondition;
 
+/**
+ * Struts controller which uses SimpleDB
+ * to persist the links.
+ * 
+ * @author flavia
+ *
+ */
 public class SimpleDBLinkController implements LinkController {
 
 	private static final String LINKS = "links";
@@ -57,6 +66,113 @@ public class SimpleDBLinkController implements LinkController {
 		return link;
 	}
 
+	public void incrementClicks(Link link) {
+
+		AmazonSimpleDB simpleDB = simpleDBService();
+
+		List<ReplaceableAttribute> attribs = new ArrayList<ReplaceableAttribute>();
+
+		boolean clicksOverwritten;
+		int attempts = 0;
+		
+		do {
+			try {
+
+				long oldClicks = numberOfClicks(link, simpleDB);
+	
+				// add 1 to number of clicks
+				attribs.add(new ReplaceableAttribute(CLICKS_ATTRIBUTE, "" + (oldClicks + 1), true));
+
+				// use UpdateCondition so we only update 
+				// if the previous value for clicks was the same that we just retrieved before
+				simpleDB.putAttributes(new PutAttributesRequest(LINKS, link.getShortCode(), attribs, 
+						new UpdateCondition(CLICKS_ATTRIBUTE, "" + oldClicks, true)));
+
+				clicksOverwritten = false;
+				
+			} catch (AmazonServiceException e) {
+				System.err.println(e.getErrorCode());
+				if ("ConditionalCheckFailed".equals(e.getErrorCode())) {
+					clicksOverwritten = true;
+					attempts++;
+				} else{
+					throw e;
+				}
+			}
+		} while (clicksOverwritten && attempts < 10);
+
+		if (clicksOverwritten && attempts >= 10) {
+			System.err.println("WARNING: Could not update the number of clicks.");
+		}
+		
+	}
+
+	private long numberOfClicks(Link link, AmazonSimpleDB simpleDB) {
+		long oldClicks = 0;
+		
+		// get the current number of clicks
+		// do a consistent read to get the latest written value
+		GetAttributesRequest request = new GetAttributesRequest(LINKS, link.getShortCode());
+		request.setConsistentRead(true);
+		GetAttributesResult result = simpleDB.getAttributes(request);
+		
+		Iterator<Attribute> iter = result.getAttributes().iterator();
+		while (iter.hasNext()) {
+			Attribute attribute = iter.next();
+			if (CLICKS_ATTRIBUTE.equals(attribute.getName())) {
+				oldClicks = Long.parseLong(attribute.getValue());
+			}
+		}
+		return oldClicks;
+	}
+	
+	public Link add(Link link) {
+
+		SimpleDateFormat format = dateFormat();
+		
+		// TODO put this in a singleton?
+		AmazonSimpleDB simpleDB = simpleDBService();
+
+		// Check if the URL has already been shortened
+		// by doing a consistent read
+		SelectRequest request = new SelectRequest(
+				"select shortcode from links where url = '" +link.getUrl()+ "'", true);
+		
+		SelectResult result = simpleDB.select(request);
+
+		String shortcode = null;
+		
+		// if so, get the already existing short URL
+		if (result.getItems().size() > 0) {
+			// we assume there is only one item
+			Item item = result.getItems().get(0);
+			Iterator<Attribute> iter = item.getAttributes().iterator();
+			while (iter.hasNext()) {
+				Attribute attribute = iter.next();
+				if (SHORTCODE_ATTRIBUTE.equals(attribute.getName())) {
+					shortcode = attribute.getValue();
+				}
+			}
+		}
+		
+		// if the url was not yet in the database, generate a new short url
+		if (shortcode == null) {
+			shortcode = generateShortcode();
+		}
+		
+		link.setShortCode(shortcode);
+		
+		List<ReplaceableAttribute> attribs = new ArrayList<ReplaceableAttribute>();
+		attribs.add(new ReplaceableAttribute(URL_ATTRIBUTE, link.getUrl(), true));
+		attribs.add(new ReplaceableAttribute(SHORTCODE_ATTRIBUTE, link.getShortCode(), true));
+		attribs.add(new ReplaceableAttribute(CREATED_ATTRIBUTE, format.format(new java.util.Date()), true));
+		attribs.add(new ReplaceableAttribute(CLICKS_ATTRIBUTE, "0", true));
+		
+		simpleDB.putAttributes(new PutAttributesRequest(LINKS, link.getShortCode(), attribs));
+		
+		return link;
+	}
+
 	private Date string2Date(Attribute attribute) {
 		try {
 			return new java.sql.Date(dateFormat().parse(attribute.getValue()).getTime());
@@ -67,62 +183,10 @@ public class SimpleDBLinkController implements LinkController {
 		}
 	}
 
-	public Link add(Link link) {
-
-		SimpleDateFormat format = dateFormat();
-		
-		// TODO put this in a singleton?
-		AmazonSimpleDB simpleDB = simpleDBService();
-
-		// TODO clicks are never updated, also not with Hibernate
-		
-		// Check if the URL has already been shortened
-		// by doing a consistent read
-		// TODO clicks i don't need i think
-		SelectRequest request = new SelectRequest(
-				"select shortcode, clicks from links where url = '" +link.getUrl()+ "'", true);
-		
-		SelectResult result = simpleDB.select(request);
-
-		// TODO no deber’a cambiar los clicks ac‡, s—lo ponerlos en 0 si arranca
-		// los clicks cambian cuando el usuario va a ese link...
-		long clicks = 0;
-		String shortcode = null;
-		
-		// if so, get the number of clicks and the short URL
-		if (result.getItems().size() > 0) {
-			// we assume there is only one item
-			Item item = result.getItems().get(0);
-			Iterator<Attribute> iter = item.getAttributes().iterator();
-			while (iter.hasNext()) {
-				Attribute attribute = iter.next();
-				if (SHORTCODE_ATTRIBUTE.equals(attribute.getName())) {
-					shortcode = attribute.getValue();
-				} else if (CLICKS_ATTRIBUTE.equals(attribute.getName())) {
-					clicks = Long.parseLong(attribute.getValue());
-				}
-			}
-		}
-		
-		if (shortcode == null) {
-			shortcode = generateShortcode();
-		}
-		
-		link.setClicks(clicks + 1);
-		link.setShortCode(shortcode);
-		
-		List<ReplaceableAttribute> attribs = new ArrayList<ReplaceableAttribute>();
-		attribs.add(new ReplaceableAttribute(URL_ATTRIBUTE, link.getUrl(), true));
-		attribs.add(new ReplaceableAttribute(SHORTCODE_ATTRIBUTE, link.getShortCode(), true));
-		attribs.add(new ReplaceableAttribute(CREATED_ATTRIBUTE, format.format(new java.util.Date()), true));
-		// TODO use "Expected" to make sure we don't overwrite the clicks
-		attribs.add(new ReplaceableAttribute(CLICKS_ATTRIBUTE, link.getClicks().toString(), true));
-		
-		simpleDB.putAttributes(new PutAttributesRequest(LINKS, link.getShortCode(), attribs));
-		
-		return link;
-	}
-
+	/**
+	 * Generate a short url which has not been assigned to any URL yet.
+	 * Or at least try 10 times :)
+	 */
 	private String generateShortcode() {
 		String shortcode;
 		int attempts = 0;
@@ -137,7 +201,7 @@ public class SimpleDBLinkController implements LinkController {
 		return shortcode;
 	}
 
-	private boolean existsShortcode(String shortcode) {
+	public boolean existsShortcode(String shortcode) {
 		AmazonSimpleDB simpleDB = simpleDBService();
 
 		GetAttributesResult result = simpleDB.getAttributes(new GetAttributesRequest(LINKS, shortcode));
@@ -161,6 +225,4 @@ public class SimpleDBLinkController implements LinkController {
 		return simpleDB;
 	}
 	
-	// TODO details of a link (details.css) are never shown... how are they supposed to be shown?
-
 }

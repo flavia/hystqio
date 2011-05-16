@@ -29,6 +29,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+/**
+ * Plain java object representing a link.
+ * Annotations are used for Hibernate.
+ * id is only used by Hibernate, not by SimpleDB.
+ */
 @Entity
 @Table(name="LINKS")
 public class Link implements Serializable{
