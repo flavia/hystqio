@@ -130,7 +130,6 @@ public class SimpleDBLinkController implements LinkController {
 
 		SimpleDateFormat format = dateFormat();
 		
-		// TODO put this in a singleton?
 		AmazonSimpleDB simpleDB = simpleDBService();
 
 		// Check if the URL has already been shortened

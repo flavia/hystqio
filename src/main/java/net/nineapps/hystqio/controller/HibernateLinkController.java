@@ -36,8 +36,6 @@ import org.hibernate.classic.Session;
  */
 public class HibernateLinkController extends HibernateUtil implements LinkController {
 
-	// TODO for very long URLs it gives an exception "Data truncation: Data too long for column 'url' at row 1"
-
 	public Link get(String shortCode) {
 		
 		Session session = HibernateUtil.getSessionFactory().getCurrentSession();
