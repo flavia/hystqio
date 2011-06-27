@@ -1,62 +1,306 @@
-/*
-    Copyright (C) 2010 Viral Patel
-    Copyright (C) 2011 9Apps.net
+/**
+ * HTML5 ✰ Boilerplate
+ *
+ * style.css contains a reset, font normalization and some base styles.
+ *
+ * Credit is left where credit is due.
+ * Much inspiration was taken from these projects:
+ * - yui.yahooapis.com/2.8.1/build/base/base.css
+ * - camendesign.com/design/
+ * - praegnanz.de/weblog/htmlcssjs-kickstart
+ */
 
-    This file is part of hystqio.
 
-    hystqio is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/**
+ * html5doctor.com Reset Stylesheet (Eric Meyer's Reset Reloaded + HTML5 baseline)
+ * v1.6.1 2010-09-17 | Authors: Eric Meyer & Richard Clark
+ * html5doctor.com/html-5-reset-stylesheet/
+ */
 
-    hystqio is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    You should have received a copy of the GNU General Public License
-    along with hystqio. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#grid {
-	display: none;
+html, body, div, span, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+abbr, address, cite, code, del, dfn, em, img, ins, kbd, q, samp,
+small, strong, sub, sup, var, b, i, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
 }
 
-body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td
-	{
-	margin: 0;
-	padding: 0;
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
 }
 
-body,input,textarea,select,button {
-	color: #414240;
-	font-family: helvetica, arial, hirakakupro-w3, osaka, "ms pgothic",
-		sans-serif;
-	font-size: 14px;
-	font-size-adjust: none;
-	font-style: normal;
-	font-variant: normal;
-	font-weight: normal;
-	line-height: 18px;
+blockquote, q { quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after { content: ""; content: none; }
+
+ins { background-color: #ff9; color: #000; text-decoration: none; }
+
+mark { background-color: #ff9; color: #000; font-style: italic; font-weight: bold; }
+
+del { text-decoration: line-through; }
+
+abbr[title], dfn[title] { border-bottom: 1px dotted; cursor: help; }
+
+table { border-collapse: collapse; border-spacing: 0; }
+
+hr { display: block; height: 1px; border: 0; border-top: 1px solid #ccc; margin: 1em 0; padding: 0; }
+
+input, select { vertical-align: middle; }
+
+
+/**
+ * Font normalization inspired by YUI Library's fonts.css: developer.yahoo.com/yui/
+ */
+
+body {*font-size:small; 
+    font: 13px/1.5 Helvetica Neue,Arial,Helvetica,'Liberation Sans',FreeSans,sans-serif;
+} /* Hack retained to preserve specificity */
+select, input, textarea, button { font:99% sans-serif; }
+
+/* Normalize monospace sizing:
+   en.wikipedia.org/wiki/MediaWiki_talk:Common.css/Archive_11#Teletype_style_fix_for_Chrome */
+pre, code, kbd, samp { font-family: monospace, sans-serif; }
+
+
+/**
+ * Minimal base styles.
+ */
+
+/* Always force a scrollbar in non-IE */
+html { overflow-y: scroll; }
+
+/* Accessible focus treatment: people.opera.com/patrickl/experiments/keyboard/test */
+a:hover, a:active { outline: none; }
+
+ul, ol { margin-left: 2em; }
+ol { list-style-type: decimal; }
+
+/* Remove margins for navigation lists */
+nav ul, nav li { margin: 0; list-style:none; list-style-image: none; }
+
+small { font-size: 85%; }
+strong, th { font-weight: bold; }
+
+td { vertical-align: top; }
+
+/* Set sub, sup without affecting line-height: gist.github.com/413930 */
+sub, sup { font-size: 75%; line-height: 0; position: relative; }
+sup { top: -0.5em; }
+sub { bottom: -0.25em; }
+
+pre {
+  /* www.pathf.com/blogs/2008/05/formatting-quoted-code-in-blog-posts-css21-white-space-pre-wrap/ */
+  white-space: pre; white-space: pre-wrap; word-wrap: break-word;
+  padding: 15px;
 }
 
-#content-inner {
-	min-height: 300px;
-	padding: 0 0 60px;
+textarea { overflow: auto; } /* www.sitepoint.com/blogs/2010/08/20/ie-remove-textarea-scrollbars/ */
+
+.ie6 legend, .ie7 legend { margin-left: -7px; } 
+
+/* Align checkboxes, radios, text inputs with their label by: Thierry Koblentz tjkdesign.com/ez-css/css/base.css  */
+input[type="radio"] { vertical-align: text-bottom; }
+input[type="checkbox"] { vertical-align: bottom; }
+.ie7 input[type="checkbox"] { vertical-align: baseline; }
+.ie6 input { vertical-align: text-bottom; }
+
+/* Hand cursor on clickable input elements */
+label, input[type="button"], input[type="submit"], input[type="image"], button { cursor: pointer; }
+
+/* Webkit browsers add a 2px margin outside the chrome of form elements */
+button, input, select, textarea { margin: 0; }
+
+/* Colors for form validity */
+input:valid, textarea:valid   {  }
+input:invalid, textarea:invalid {
+   border-radius: 1px; -moz-box-shadow: 0px 0px 5px red; -webkit-box-shadow: 0px 0px 5px red; box-shadow: 0px 0px 5px red;
+}
+.no-boxshadow input:invalid, .no-boxshadow textarea:invalid { background-color: #f0dddd; }
+
+
+/* These selection declarations have to be separate
+   No text-shadow: twitter.com/miketaylr/status/12228805301
+   Also: hot pink! */
+::-moz-selection{ background: #FF5E99; color:#fff; text-shadow: none; }
+::selection { background:#FF5E99; color:#fff; text-shadow: none; }
+
+/* j.mp/webkit-tap-highlight-color */
+a:link { -webkit-tap-highlight-color: #FF5E99; }
+
+/* Make buttons play nice in IE:
+   www.viget.com/inspire/styling-the-button-element-in-internet-explorer/ */
+button {  width: auto; overflow: visible; }
+
+/* Bicubic resizing for non-native sized IMG:
+   code.flickr.com/blog/2008/11/12/on-ui-quality-the-little-things-client-side-image-resizing/ */
+.ie7 img { -ms-interpolation-mode: bicubic; }
+
+/**
+ * You might tweak these..
+ */
+
+body, select, input, textarea {
+  /* #444 looks better than black: twitter.com/H_FJ/statuses/11800719859 */
+  color: #444;
+  /* Set your base font here, to apply evenly */
+  /* font-family: Georgia, serif;  */
 }
 
-h1.title {
-	font-size: 30px;
-	margin: 10px 0 0 0px;
+/* Headers (h1, h2, etc) have no default font-size or margin; define those yourself */
+h1, h2, h3, h4, h5, h6 { font-weight: bold; }
+
+a, a:active, a:visited { color: #607890; }
+a:hover { color: #036; }
+
+/* For image replacement */
+.ir { display: block; text-indent: -999em; overflow: hidden; background-repeat: no-repeat; text-align: left; direction: ltr; }
+
+/* Hide for both screenreaders and browsers:
+   css-discuss.incutio.com/wiki/Screenreader_Visibility */
+.hidden { display: none; visibility: hidden; }
+
+/* Hide only visually, but have it available for screenreaders: by Jon Neal.
+  www.webaim.org/techniques/css/invisiblecontent/  &  j.mp/visuallyhidden */
+.visuallyhidden { border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
+/* Extends the .visuallyhidden class to allow the element to be focusable when navigated to via the keyboard: drupal.org/node/897638 */
+.visuallyhidden.focusable:active,
+.visuallyhidden.focusable:focus { clip: auto; height: auto; margin: 0; overflow: visible; position: static; width: auto; }
+
+/* Hide visually and from screenreaders, but maintain layout */
+.invisible { visibility: hidden; }
+
+/* The Magnificent Clearfix: Updated to prevent margin-collapsing on child elements.
+   j.mp/bestclearfix */
+.clearfix:before, .clearfix:after { content: "\0020"; display: block; height: 0; overflow: hidden; }
+.clearfix:after { clear: both; }
+/* Fix clearfix: blueprintcss.lighthouseapp.com/projects/15318/tickets/5-extra-margin-padding-bottom-of-page */
+.clearfix { zoom: 1; }
+
+body, html {
+	font-family: "Helvetica Neue",Arial,sans-serif;
+	background-color: #47809B;
 }
 
-#link-container {
-	text-align:center;
+
+header {
+	padding: 4em 0 0 2em;	
 }
 
-.link {
-	font-size:20px;
-	border:4px solid #aaa;
-	background-color: #FFF8B1;
-	width:350px;
-	padding:3px;
+header hgroup {
+	width: 680px;
+	margin: 0 auto;
+}
+
+h1 {
+	  font-size: 42px;
+    font-weight: 100;
+    line-height: 50px;
+    margin: 0 0 40px;
+    color: white;
+    text-align: center;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+h3 {
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+h3 em {
+    font-style: normal;
+    font-weight: 300;
+}
+
+.front-page form .holding input {
+    -moz-transition: opacity 1s ease 0s;
+    background-color: white;
+    border: medium none !important;
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2) inset;
+    opacity: 0.7;
+}
+.front-page form .holding:hover input {
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3) inset;
+    opacity: 0.9;
+}
+.front-page form .holding input:focus, .front-page form .holding input.focused, .front-page form .holding input.actasfocused {
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.1) inset, 0 0 10px rgba(255, 255, 255, 0.9);
+    opacity: 1;
+    outline: medium none;
+}
+
+.front-page .search .holding {
+	position: relative;
+}
+
+.front-page .search .holding,
+.front-signup  {
+	width: 634px;
+	margin: 0 auto;	
+}
+
+.front-page .search .holding label {
+	position: absolute;
+	top: 8px;
+	left: 16px;	
+	font-size: 15px;
+	color: #999;
+}
+
+.front-page form.signup .holding input, .front-page form.signup .holding .holder {
+    font: 15px "Helvetica Neue",Arial,sans-serif;
+}
+.front-page form.signup .holding input {
+    border-radius: 4px 4px 4px 4px;
+    margin-bottom: 8px;
+    opacity: 1 !important;
+    padding: 9px 7px 10px;
+    width: 608px;
+}
+.front-page form.signup .holding .holder {
+    line-height: 38px;
+}
+
+a.promotional, input.promotional {
+    background: url("../img/bg-btn-signup.png") repeat-x scroll 0 0 #FFAA22;
+    border: 1px solid #FFAA22;
+    border-radius: 5px 5px 5px 5px;
+    box-shadow: 0 1px 0 #FFFFFF;
+    color: #333333;
+    cursor: pointer;
+    display: block;
+    font: bold 16px Helvetica Neue,Arial,Sans-serif;
+    padding: 4px 8px;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 0 1px 0 #FFEE66;
+}
+a.promotional:hover, a.promotional:focus, input.promotional:hover, input.promotional:focus {
+    background-position: 0 -5px;
+    color: #111111;
+}
+a.promotional:active, input.promotional:active {
+    background-image: none;
+}
+
+.front-signup .submit {
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+    float: right;
+    height: 35px;
+    margin-right: 6px;
+    padding-left: 16px;
+    padding-right: 16px;
 }
