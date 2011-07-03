@@ -1,15 +1,16 @@
 package net.nineapps.hystqio.controller;
 
-import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
 
 import net.nineapps.hystqio.model.Link;
 import net.nineapps.hystqio.util.HystqioUtils;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
@@ -27,31 +28,32 @@ import com.amazonaws.services.simpledb.model.SelectResult;
 import com.amazonaws.services.simpledb.model.UpdateCondition;
 
 /**
- * Struts controller which uses SimpleDB
+ * Struts data access object which uses SimpleDB
  * to persist the links.
  * 
  * @author flavia
  *
  */
-public class SimpleDBLinkController implements LinkController {
+public class SimpleDBLinkDAO implements LinkDAO {
 
 	private static final String LINKS = "links";
 	private static final String URL_ATTRIBUTE = "url";
 	private static final String SHORTCODE_ATTRIBUTE = "shortcode";
 	private static final String CLICKS_ATTRIBUTE = "clicks";
 	private static final String CREATED_ATTRIBUTE = "created";
+
+	private static Log log = LogFactory.getLog(SimpleDBLinkDAO.class);
+	
+	private AmazonSimpleDB simpleDB = null;
 	
 	public Link get(String shortCode) {
 
-		AmazonSimpleDB simpleDB = simpleDBService();
+		AmazonSimpleDB simpleDB = getSimpleDBService();
 
 		Link link = new Link();
 		
 		GetAttributesResult result = simpleDB.getAttributes(new GetAttributesRequest(LINKS, shortCode));
-		List<Attribute> attributes = result.getAttributes();
-		Iterator<Attribute> iter = attributes.iterator();
-		while (iter.hasNext()) {
-			Attribute attribute = iter.next();
+		for (Attribute attribute : result.getAttributes()) {
 			if (URL_ATTRIBUTE.equals(attribute.getName())) {
 				link.setUrl(attribute.getValue());
 			} else if (SHORTCODE_ATTRIBUTE.equals(attribute.getName())) {
@@ -68,7 +70,7 @@ public class SimpleDBLinkController implements LinkController {
 
 	public void incrementClicks(Link link) {
 
-		AmazonSimpleDB simpleDB = simpleDBService();
+		AmazonSimpleDB simpleDB = getSimpleDBService();
 
 		List<ReplaceableAttribute> attribs = new ArrayList<ReplaceableAttribute>();
 
@@ -91,7 +93,7 @@ public class SimpleDBLinkController implements LinkController {
 				clicksOverwritten = false;
 				
 			} catch (AmazonServiceException e) {
-				System.err.println(e.getErrorCode());
+				log.error(e.getErrorCode());
 				if ("ConditionalCheckFailed".equals(e.getErrorCode())) {
 					clicksOverwritten = true;
 					attempts++;
@@ -102,7 +104,7 @@ public class SimpleDBLinkController implements LinkController {
 		} while (clicksOverwritten && attempts < 10);
 
 		if (clicksOverwritten && attempts >= 10) {
-			System.err.println("WARNING: Could not update the number of clicks.");
+			log.error("WARNING: Could not update the number of clicks.");
 		}
 		
 	}
@@ -116,11 +118,10 @@ public class SimpleDBLinkController implements LinkController {
 		request.setConsistentRead(true);
 		GetAttributesResult result = simpleDB.getAttributes(request);
 		
-		Iterator<Attribute> iter = result.getAttributes().iterator();
-		while (iter.hasNext()) {
-			Attribute attribute = iter.next();
+		for (Attribute attribute: result.getAttributes()) {
 			if (CLICKS_ATTRIBUTE.equals(attribute.getName())) {
 				oldClicks = Long.parseLong(attribute.getValue());
+				break;
 			}
 		}
 		return oldClicks;
@@ -130,7 +131,7 @@ public class SimpleDBLinkController implements LinkController {
 
 		SimpleDateFormat format = dateFormat();
 		
-		AmazonSimpleDB simpleDB = simpleDBService();
+		AmazonSimpleDB simpleDB = getSimpleDBService();
 
 		// Check if the URL has already been shortened
 		// by doing a consistent read
@@ -145,11 +146,10 @@ public class SimpleDBLinkController implements LinkController {
 		if (result.getItems().size() > 0) {
 			// we assume there is only one item
 			Item item = result.getItems().get(0);
-			Iterator<Attribute> iter = item.getAttributes().iterator();
-			while (iter.hasNext()) {
-				Attribute attribute = iter.next();
+			for (Attribute attribute : item.getAttributes()) {
 				if (SHORTCODE_ATTRIBUTE.equals(attribute.getName())) {
 					shortcode = attribute.getValue();
+					break;
 				}
 			}
 		}
@@ -172,13 +172,13 @@ public class SimpleDBLinkController implements LinkController {
 		return link;
 	}
 
-	private Date string2Date(Attribute attribute) {
+	private java.sql.Date string2Date(Attribute attribute) {
 		try {
 			return new java.sql.Date(dateFormat().parse(attribute.getValue()).getTime());
 		} catch (ParseException pe) {
-			System.err.println(pe);
+			log.error(pe);
 			throw new IllegalStateException(
-					"ParseException while parsing the date stored in SimpleDB", pe);
+					"ParseException while parsing the date stored in SimpleDB: " + attribute.getValue(), pe);
 		}
 	}
 
@@ -195,18 +195,18 @@ public class SimpleDBLinkController implements LinkController {
 			// check if the shortcode doesn't already exist
 		} while (existsShortcode(shortcode) && attempts < 10);
 		if (attempts > 1) {
-			System.err.println("WARNING: " +attempts+ " attempts to create a shortcode which is not taken.");
+			log.error("WARNING: " +attempts+ " attempts to create a shortcode which is not taken.");
 		}
 		return shortcode;
 	}
 
 	public boolean existsShortcode(String shortcode) {
-		AmazonSimpleDB simpleDB = simpleDBService();
+		AmazonSimpleDB simpleDB = getSimpleDBService();
 
 		GetAttributesResult result = simpleDB.getAttributes(new GetAttributesRequest(LINKS, shortcode));
 		
 		// if attributes is null, then the item doesn't exist
-		return result.getAttributes() == null;
+		return result.getAttributes() != null;
 	}
 	
 	private SimpleDateFormat dateFormat() {
@@ -214,14 +214,20 @@ public class SimpleDBLinkController implements LinkController {
 		return format;
 	}
 
-	private AmazonSimpleDB simpleDBService() {
+	private AmazonSimpleDB getSimpleDBService() {
+		if (simpleDB == null) {
+			initSimpleDBService();
+		}
+		return simpleDB;
+	}
+
+	private void initSimpleDBService() {
 		ResourceBundle bundle = ResourceBundle.getBundle ("aws");
 		
 		AWSCredentials credentials = new BasicAWSCredentials(
 				bundle.getString("accessKey"), bundle.getString("secretKey"));
 		
-		AmazonSimpleDB simpleDB = new AmazonSimpleDBClient(credentials);
-		return simpleDB;
+		simpleDB = new AmazonSimpleDBClient(credentials);
 	}
 	
 }

@@ -21,9 +21,9 @@ package net.nineapps.hystqio.view;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.nineapps.hystqio.controller.HibernateLinkController;
-import net.nineapps.hystqio.controller.LinkController;
-import net.nineapps.hystqio.controller.SimpleDBLinkController;
+import net.nineapps.hystqio.controller.HibernateLinkDAO;
+import net.nineapps.hystqio.controller.LinkDAO;
+import net.nineapps.hystqio.controller.SimpleDBLinkDAO;
 import net.nineapps.hystqio.model.Link;
 import net.nineapps.hystqio.util.HystqioUtils;
 
@@ -41,7 +41,7 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 	private String url;
 	private Link link;
 
-	private LinkController linkController;
+	private LinkDAO linkController;
 
 	private HttpServletRequest request;
 
@@ -125,17 +125,17 @@ public class LinkAction extends ActionSupport implements ServletRequestAware {
 		this.request = request;
 	}
 
-	private LinkController initLinkController() {
+	private LinkDAO initLinkController() {
 		String persistence = request.getSession().getServletContext()
 				.getInitParameter("persistence");
 		if (persistence != null
 				&& "hibernate".equals(persistence.toLowerCase())) {
-			return new HibernateLinkController();
+			return new HibernateLinkDAO();
 		}
-		return new SimpleDBLinkController();
+		return new SimpleDBLinkDAO();
 	}
 
-	private LinkController getLinkController() {
+	private LinkDAO getLinkController() {
 		if (linkController == null) {
 			linkController = initLinkController();
 		}

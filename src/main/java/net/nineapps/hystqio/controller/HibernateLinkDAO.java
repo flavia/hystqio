@@ -26,6 +26,8 @@ import net.nineapps.hystqio.model.Link;
 import net.nineapps.hystqio.util.HibernateUtil;
 import net.nineapps.hystqio.util.HystqioUtils;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hibernate.Query;
 import org.hibernate.classic.Session;
 
@@ -34,7 +36,9 @@ import org.hibernate.classic.Session;
  * the links in a relational database.
  *
  */
-public class HibernateLinkController extends HibernateUtil implements LinkController {
+public class HibernateLinkDAO extends HibernateUtil implements LinkDAO {
+
+	private static Log log = LogFactory.getLog(HibernateLinkDAO.class);
 
 	public Link get(String shortCode) {
 		
@@ -92,10 +96,7 @@ public class HibernateLinkController extends HibernateUtil implements LinkContro
 		Query query = session.createQuery("from Link where shortcode = :code");
 		query.setString("code", shortcode);
 		Link link = (Link) query.uniqueResult();
-		if (link != null) {
-			return true;
-		}
-		return false;
+		return (link != null);
 	}
 
 	/**
@@ -111,7 +112,7 @@ public class HibernateLinkController extends HibernateUtil implements LinkContro
 			// check if the shortcode doesn't already exist
 		} while (existsShortcode(shortcode, session) && attempts < 10);
 		if (attempts > 1) {
-			System.err.println("WARNING: " +attempts+ " attempts to create a shortcode which is not taken.");
+			log.error("WARNING: " +attempts+ " attempts to create a shortcode which is not taken.");
 		}
 		return shortcode;
 	}
