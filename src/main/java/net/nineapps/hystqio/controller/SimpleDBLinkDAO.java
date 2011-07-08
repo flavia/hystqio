@@ -28,7 +28,7 @@ import com.amazonaws.services.simpledb.model.SelectResult;
 import com.amazonaws.services.simpledb.model.UpdateCondition;
 
 /**
- * Struts data access object which uses SimpleDB
+ * Data access object which uses SimpleDB
  * to persist the links.
  * 
  * @author flavia
